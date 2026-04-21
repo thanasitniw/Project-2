@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gh auth *)",
+      "Bash(docker info *)",
+      "Bash(npm install *)",
+      "Read(//usr/local/bin/**)",
+      "Bash(brew list *)",
+      "Bash(gh repo *)",
+      "Bash(docker build *)",
+      "Bash(docker run *)",
+      "Bash(curl -s http://localhost:3000/api/stats)",
+      "Bash(docker stop *)",
+      "Bash(docker rm *)"
+    ]
+  }
+}
