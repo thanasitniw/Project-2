@@ -196,6 +196,44 @@ app.get("/api/audit/:asn", (req, res) => {
   res.json(rows);
 });
 
+// ── Block Overview Data (from ASN-Assigment.master.xlsx Main-Sheet) ──
+const BLOCK_DATA = [
+  { block:1,  start:64512, stop:64550, trueRemark:"Reserved - do not prefer to used", dtacRemark:"",                 newRemark:"",               duplicated:1,  notDuplicated:0,  totalASN:39, utilization:0.02564, pctDuplication:0.02564 },
+  { block:2,  start:64551, stop:64600, trueRemark:"Available",                         dtacRemark:"Available /IT",    newRemark:"Transport(9)",   duplicated:0,  notDuplicated:13, totalASN:50, utilization:0.26,    pctDuplication:0       },
+  { block:3,  start:64601, stop:64650, trueRemark:"CoreNetwork(11)",                   dtacRemark:"CBI18 (100%)",     newRemark:"",               duplicated:11, notDuplicated:35, totalASN:50, utilization:0.92,    pctDuplication:0.22    },
+  { block:4,  start:64651, stop:64700, trueRemark:"CoreNetwork(7)",                    dtacRemark:"IPCORE (100%)",    newRemark:"",               duplicated:8,  notDuplicated:30, totalASN:50, utilization:0.76,    pctDuplication:0.16    },
+  { block:5,  start:64701, stop:64750, trueRemark:"Available",                         dtacRemark:"IPCORE / NFV / IT",newRemark:"",               duplicated:23, notDuplicated:6,  totalASN:50, utilization:0.58,    pctDuplication:0.46    },
+  { block:6,  start:64751, stop:64800, trueRemark:"Available",                         dtacRemark:"IPCORE / NFV / IT",newRemark:"",               duplicated:0,  notDuplicated:33, totalASN:50, utilization:0.66,    pctDuplication:0       },
+  { block:7,  start:64801, stop:64850, trueRemark:"Available",                         dtacRemark:"IPCORE / IT",      newRemark:"",               duplicated:17, notDuplicated:31, totalASN:50, utilization:0.96,    pctDuplication:0.34    },
+  { block:8,  start:64851, stop:64900, trueRemark:"Available",                         dtacRemark:"IPCORE / CBS",     newRemark:"",               duplicated:0,  notDuplicated:22, totalASN:50, utilization:0.44,    pctDuplication:0       },
+  { block:9,  start:64901, stop:64950, trueRemark:"DOCSIS(1)",                         dtacRemark:"GGSN/PGW",         newRemark:"",               duplicated:1,  notDuplicated:49, totalASN:50, utilization:1.0,     pctDuplication:0.02    },
+  { block:10, start:64951, stop:65000, trueRemark:"Available",                         dtacRemark:"GGSN/PGW",         newRemark:"",               duplicated:0,  notDuplicated:37, totalASN:50, utilization:0.74,    pctDuplication:0       },
+  { block:11, start:65001, stop:65050, trueRemark:"BFKT / Online (6)",                 dtacRemark:"IPRAN (6)",        newRemark:"Transport(2)",   duplicated:4,  notDuplicated:5,  totalASN:50, utilization:0.18,    pctDuplication:0.08    },
+  { block:12, start:65051, stop:65100, trueRemark:"Available",                         dtacRemark:"Available",        newRemark:"Core-Network(18)",duplicated:0, notDuplicated:21, totalASN:50, utilization:0.42,    pctDuplication:0       },
+  { block:13, start:65101, stop:65150, trueRemark:"CoreNetwork(11)",                   dtacRemark:"IT",               newRemark:"",               duplicated:10, notDuplicated:21, totalASN:50, utilization:0.62,    pctDuplication:0.20    },
+  { block:14, start:65151, stop:65200, trueRemark:"Available",                         dtacRemark:"CBI18 / IT",       newRemark:"",               duplicated:1,  notDuplicated:26, totalASN:50, utilization:0.54,    pctDuplication:0.02    },
+  { block:15, start:65201, stop:65250, trueRemark:"CoreNetwork(11)",                   dtacRemark:"CBI18 / IT",       newRemark:"",               duplicated:20, notDuplicated:30, totalASN:50, utilization:1.0,     pctDuplication:0.40    },
+  { block:16, start:65251, stop:65300, trueRemark:"Available",                         dtacRemark:"CBI18 / IT",       newRemark:"",               duplicated:14, notDuplicated:36, totalASN:50, utilization:1.0,     pctDuplication:0.28    },
+  { block:17, start:65301, stop:65350, trueRemark:"CoreNetwork(10)",                   dtacRemark:"CBI18 / IT",       newRemark:"",               duplicated:20, notDuplicated:30, totalASN:50, utilization:1.0,     pctDuplication:0.40    },
+  { block:18, start:65351, stop:65400, trueRemark:"Available",                         dtacRemark:"CBI18 / IT",       newRemark:"",               duplicated:1,  notDuplicated:49, totalASN:50, utilization:1.0,     pctDuplication:0.02    },
+  { block:19, start:65401, stop:65450, trueRemark:"CoreNetwork(10)",                   dtacRemark:"CBI18 / IT",       newRemark:"",               duplicated:45, notDuplicated:5,  totalASN:50, utilization:1.0,     pctDuplication:0.90    },
+  { block:20, start:65451, stop:65500, trueRemark:"",                                  dtacRemark:"CBI18 / IT",       newRemark:"",               duplicated:14, notDuplicated:36, totalASN:50, utilization:1.0,     pctDuplication:0.28    },
+  { block:21, start:65501, stop:65534, trueRemark:"Reserved - do not prefer to used", dtacRemark:"",                 newRemark:"",               duplicated:0,  notDuplicated:1,  totalASN:34, utilization:0.02941, pctDuplication:0       },
+];
+
+app.get("/api/blocks", (req, res) => {
+  // Exclude Reserved blocks (1 & 21) from KPI — matches Excel formula
+  const active = BLOCK_DATA.filter(b => !b.trueRemark.includes('Reserved'));
+  const totalUsed = active.reduce((s, b) => s + b.duplicated + b.notDuplicated, 0);
+  const totalDup  = active.reduce((s, b) => s + b.duplicated, 0);
+  const totalASN  = active.reduce((s, b) => s + b.totalASN, 0);
+  res.json({
+    blocks: BLOCK_DATA,
+    overallUtilization: totalASN ? totalUsed / totalASN : 0,
+    overallDuplication: totalASN ? totalDup  / totalASN : 0,
+  });
+});
+
 app.listen(PORT, () => {
   console.log(`ASN Manager running on http://localhost:${PORT}`);
 });
